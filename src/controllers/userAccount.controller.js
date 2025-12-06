@@ -1,67 +1,78 @@
 import userAccountService from "../services/user.account.service.js";
 
 class UserAccountController {
-async registerUser(req, res, next) {
-    try {
-        const user = await userAccountService.registerUser(req.body);
-        return res.json(user);
-    } catch (error) {
-        return next(error);
-    }
-}
-async deleteUser(req, res, next) {
-    try {
-        const user = await userAccountService.deleteUser(req.params.user);
-        return res.json(user);
-    } catch (error) {
-        return next(error);
-    }
-}
-async updateUser(req, res, next) {
-    try {
-        const user = await userAccountService.updateUser(req.params.user, req.body);
-        return res.json(user);
-    }
-    catch (error) {
-        return next(error);
-    }
-}
-    async addRole(req, res, next) {
+    async register(req, res, next) {
         try {
-            const user = await userAccountService.changeRoles(
-                req.params.user,
-                req.params.role,
-                true
-            );
-            res.json(user);
+            const userAccount = await userAccountService.register(req.body);
+            return res.status(201).json(userAccount);
         } catch (err) {
-            next(err);
+            return next(err);
         }
     }
 
-    async removeRole(req, res, next) {
+    async login(req, res, next) {
+        // TODO login in controller
+    }
+
+    async deleteUser(req, res, next) {
         try {
-            const user = await userAccountService.changeRoles(
-                req.params.user,
-                req.params.role,
-                false
-            );
-            res.json(user);
+            const userAccount = await userAccountService.removeUser(req.params.user);
+            return res.json(userAccount);
         } catch (err) {
-            next(err);
+            return next(err);
         }
     }
+
+    async updateUser(req, res, next) {
+        try {
+            const userAccount = await userAccountService.updateUser(req.params.user, req.body);
+            return res.json(userAccount);
+        } catch (err) {
+            return next(err);
+        }
+    }
+
+    async addRole(req, res, next) {
+        const {user, role} = req.params;
+        try {
+            const userRoles = await userAccountService.changeRoles(user, role, true);
+            return res.json(userRoles);
+        } catch (err) {
+            return next(err);
+        }
+    }
+
+    async deleteRole(req, res, next) {
+        const {user, role} = req.params;
+        try {
+            const userRoles = await userAccountService.changeRoles(user, role, false);
+            return res.json(userRoles);
+        } catch (err) {
+            return next(err);
+        }
+    }
+
+    async changePassword(req, res, next) {
+        const login = req.params.user; //undefined
+        const { password } = req.body;
+
+        try {
+            await userAccountService.changePassword(login, password);
+            return res.sendStatus(204);
+        } catch (err) {
+            return next(err);
+        }
+    }
+
 
     async getUser(req, res, next) {
         try {
-            const user = await userAccountService.getUser(req.params.user);
-            return res.json(user);
-        }
-        catch (err) {
-            next(err);
+            const userAccount = await userAccountService.getUser(req.params.user);
+            return res.json(userAccount);
+        } catch (err) {
+            return next(err);
         }
     }
-
 }
 
 export default new UserAccountController();

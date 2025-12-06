@@ -1,34 +1,43 @@
-import User from '../models/user.account.model.js';
-import Post from "../models/post.model.js";
+import UserAccount from '../models/user.account.model.js';
+import bcrypt from "bcrypt";
 
-class UserRepository {
-    async registerUser(userData) {
-        const user = new User(userData);
-        return await user.save();
+class UserAccountRepository {
+    async addUser(user) {
+        console.log(user);
+        const userAccount = new UserAccount(user);
+        return userAccount.save();
     }
-   async deleteUser(login) {
-        return await User.findOneAndDelete({login});
-   }
 
-   async updateUser(login, userData) {
-        return await User.findOneAndUpdate({login}, userData, {new: true});
+    async findUser(login) {
+        return UserAccount.findById(login);
+    }
+
+    async removeUser(login) {
+        return UserAccount.findByIdAndDelete(login);
+    }
+
+    async updateUser(login, user){
+        return UserAccount.findByIdAndUpdate(login, user, {new: true});
     }
 
     async addRole(login, role) {
-        return await User.findOneAndUpdate({ login }, { $addToSet: { roles: role } }, { new: true });
+        return UserAccount.findByIdAndUpdate(login, {$addToSet: {roles: role}}, {new: true});
     }
 
-
-    async deleteRole(login, role) {
-        return await User.findOneAndUpdate({login}, {$pull: {roles: role}}, { new: true })
+    async removeRole(login, role) {
+        return UserAccount.findByIdAndUpdate(login, {$pull: {roles: role}}, {new: true});
     }
 
-    async getUser(login) {
-        const userData = await User.findOne({ login });
-        console.log(userData);
-        return userData;
+    async changePassword(login, password) {
+        const hashedPassword = await bcrypt.hash(password, 12);
+
+        return UserAccount.findByIdAndUpdate(
+            login,
+            { password: hashedPassword },
+            { new: true }
+        );
     }
 
 }
 
-export default new UserRepository();
+export default new UserAccountRepository();

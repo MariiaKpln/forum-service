@@ -1,60 +1,64 @@
-import UserRepository from '../repositories/user.account.repository.js';
-
+import userAccountRepository from '../repositories/user.account.repository.js';
 
 class UserAccountService {
-    async registerUser(user) {
-     return await UserRepository.registerUser(user)
-    }
-
-    async loginUser(login) {
-       //TODO login user
-    }
-
-    async deleteUser(login) {
-        const user = await UserRepository.deleteUser(login);
-        if(!user) {
-            throw new Error(`User with login ${login} not found`)
+    async register(user) {
+        try {
+            return await userAccountRepository.addUser(user);
+        } catch (e) {
+            console.log(e);
+            throw new Error('User with this login already exists');
         }
-      return user;
     }
+
+    async getUser(login) {
+        const userAccount =
+            await userAccountRepository.findUser(login);
+        if (!userAccount) {
+            throw new Error(`User with login ${login} not found`);
+        }
+        return userAccount;
+    }
+
+    async removeUser(login) {
+        const userAccount =
+            await userAccountRepository.removeUser(login);
+        if (!userAccount) {
+            throw new Error(`User with login ${login} not found`);
+        }
+        return userAccount;
+    }
+
     async updateUser(login, user) {
-       const updatedUser = await UserRepository.updateUser(login, user);
-        if(!updatedUser) {
-            throw new Error(`User with login ${login} not found`)
+        const userAccount =
+            await userAccountRepository.updateUser(login, user);
+        if (!userAccount) {
+            throw new Error(`User with login ${login} not found`);
         }
-       return updatedUser;
+        return userAccount;
     }
-
 
     async changeRoles(login, role, isAddRole) {
-        const user = await UserRepository.getUser(login);
-        if (!user) {
-            throw new Error(`User "${login}" not found`);
-        }
+        role = role.toUpperCase();
+        let userAccount;
         if (isAddRole) {
-            if (user.roles.includes(role)) {
-                throw new Error(`Role "${role}" already exists for user "${login}"`);
-            }
-            return await UserRepository.addRole(login, role);
+            userAccount = await userAccountRepository.addRole(login, role);
+        } else {
+            userAccount = await userAccountRepository.removeRole(login, role);
         }
-        if (!user.roles.includes(role)) {
-            throw new Error(`Role "${role}" does not exist for user "${login}"`);
+        if (!userAccount) {
+            throw new Error(`User with login ${login} not found`);
         }
-        return await UserRepository.deleteRole(login, role);
+        const {roles, userName = login} = userAccount;
+        return {roles, login: userName};
     }
-
 
     async changePassword(login, newPassword) {
-        //TODO update password
+        const userAccount = await userAccountRepository.changePassword(login, newPassword);
+        if (!userAccount) {
+            throw new Error('User not found');
+        }
+        return userAccount;
     }
-
-    async getUser(user) {
-       const userData = UserRepository.getUser(user);
-       if(!userData.login) {
-           throw new Error(`User with login ${user} not found`)
-       }
-       return userData;
-    }
-
 }
+
 export default new UserAccountService();
