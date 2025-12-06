@@ -53,8 +53,9 @@ class UserAccountController {
     }
 
     async changePassword(req, res, next) {
-        const login = req.params.user; //undefined
+        const login = req.headers['x-login']; //checked that method works
         const { password } = req.body;
+        console.log(login);
 
         try {
             await userAccountService.changePassword(login, password);
