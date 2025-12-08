@@ -4,10 +4,14 @@ import config from "./config/config.js"
 import postRoutes from "./routes/post.routes.js"
 import userAccountRoutes from "./routes/user.routs.js";
 import errorHandler from "./middlewares/error.middleware.js";
+import authentification from "./middlewares/authentication.middleware.js";
+import {createAdmin} from "./config/initAdmin.js";
 
 const app = express()
 
-app.use(express.json())
+app.use(express.json());
+app.use(authentification);
+
 
 app.use('/forum', postRoutes)
 app.use('/account', userAccountRoutes);
@@ -17,6 +21,7 @@ app.use(errorHandler)
 const connectDB = async () => {
     try {
         await mongoose.connect(config.mongodb.uri, config.mongodb.db)
+        await createAdmin();
         console.log('MongoDB connected successfully')
     } catch (error) {
         console.log('MongoDB connection error', error)

@@ -1,5 +1,6 @@
 import UserAccount from '../models/user.account.model.js';
 import bcrypt from "bcrypt";
+import {ADMIN} from "../config/constants.js";
 
 class UserAccountRepository {
     async addUser(user) {
@@ -13,7 +14,7 @@ class UserAccountRepository {
     }
 
     async removeUser(login) {
-        return UserAccount.findByIdAndDelete(login);
+            return UserAccount.findByIdAndDelete(login);
     }
 
     async updateUser(login, user){

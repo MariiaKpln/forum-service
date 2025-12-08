@@ -1,5 +1,6 @@
 import {model, Schema} from "mongoose";
 import bcrypt from 'bcrypt'
+import {USER, MODERATOR, ADMIN} from "../config/constants.js";
 
 const userAccountSchema = new Schema({
     _id: {
@@ -21,7 +22,7 @@ const userAccountSchema = new Schema({
     },
     roles: {
         type: [String],
-        default: ['USER']
+        default: USER
     }
 }, {
     versionKey: false,
@@ -40,5 +41,10 @@ userAccountSchema.pre('save', async function() {
         this.password = await bcrypt.hash(this.password, salt);
     }
 })
+
+userAccountSchema.methods.comparePassword = async function(plainTextPassword) {
+    return await bcrypt.compare(plainTextPassword, this.password);
+}
+
 
 export default model('UserAccount', userAccountSchema, 'users');
