@@ -68,7 +68,12 @@ class PostController {
 
     async addComment(req, res, next) {
         try {
-            //TODO
+            const login = req.principal.username;
+            const commenter = req.params.commenter
+            const isSelf = login === commenter;
+            if (!isSelf) {
+                return next({message: 'Invalid credentials', statusCode: 403});
+            }
             const post = await postService.addComment(req.params.id, req.params.commenter, req.body.message);
             return res.json(post);
         } catch (err) {
@@ -76,7 +81,7 @@ class PostController {
         }
     }
 
-    async getPostsByTags(req, res, next) { //done
+    async getPostsByTags(req, res, next) {
         let values;
         if (Array.isArray(req.query.values)) {
             values = req.query.values.reduce((acc, item) => acc + ',' + item);
@@ -91,7 +96,7 @@ class PostController {
         }
     }
 
-    async getPostsByPeriod(req, res, next) { //done
+    async getPostsByPeriod(req, res, next) {
         try {
             const {dateFrom, dateTo} = req.query;
             const posts = await postService.getPostsByPeriod(dateFrom, dateTo);
