@@ -3,7 +3,8 @@ const authentification = async (req, res, next) => {
     if(req.path !== '/account/register') {
         const authorization = req.headers.authorization;
         if(!authorization || !authorization.startsWith('Basic ')) {
-            return res.status(401).json({message: 'Authorization required'})
+            return  res.status(401).json({message: 'Authorization required'});
+
         }
         const token = authorization.split(' ')[1];
         const decodedToken = Buffer.from(token, 'base64').toString('ascii');
@@ -18,7 +19,7 @@ const authentification = async (req, res, next) => {
     }
 
 
-    return next();
+   return next();
 }
 
 export default authentification;

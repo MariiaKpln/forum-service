@@ -1,5 +1,6 @@
 import userAccountService from "../services/user.account.service.js";
 import UserAccount from "../models/user.account.model.js";
+import {requireAuth, requireSelf, requireSelfOrAdmin} from "../middlewares/authorization.middleware.js";
 
 class UserAccountController {
     async register(req, res, next) {
@@ -18,38 +19,30 @@ class UserAccountController {
 
     async deleteUser(req, res, next) {
         try {
-            const principalLogin = req.principal.username;     // логин авторизованного пользователя
-            const targetLogin = req.params.user;               // логин пользователя, которого хотят удалить
+            requireSelfOrAdmin(req);
 
-            const isAdmin = req.principal.roles.includes('ADMIN');
-            const isSelf = principalLogin === targetLogin;
-            if (!isSelf && !isAdmin) {
-                return next({message: 'Invalid credentials', statusCode: 403});
-            }
-                const userAccount = await userAccountService.removeUser(targetLogin);
-                return res.json(userAccount);
+            const targetLogin = req.params.user;
+            const userAccount = await userAccountService.removeUser(targetLogin);
+
+            return res.json(userAccount);
 
         } catch (err) {
             return next(err);
         }
     }
 
+
     async updateUser(req, res, next) {
         try {
-            const principalLogin = req.principal.username;
-            const targetLogin = req.params.user;
-            const isSelf = principalLogin === targetLogin;
-
-            if (!isSelf) {
-                return next({message: 'Invalid credentials', statusCode: 403});
-            }
-
-            const userAccount = await userAccountService.updateUser(targetLogin, req.body);
+            requireSelf(req);  // выбросит 401 или 403, если не соответствует
+            const userAccount = await userAccountService.updateUser(req.params.user, req.body);
             return res.json(userAccount);
         } catch (err) {
             return next(err);
         }
     }
+
+
 
 
     async addRole(req, res, next) {
