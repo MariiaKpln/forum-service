@@ -23,11 +23,11 @@ class UserAccountController {
 
             const isAdmin = req.principal.roles.includes('ADMIN');
             const isSelf = principalLogin === targetLogin;
-
-            if (isAdmin || isSelf) {
+            if (!isSelf && !isAdmin) {
+                return next({message: 'Invalid credentials', statusCode: 403});
+            }
                 const userAccount = await userAccountService.removeUser(targetLogin);
                 return res.json(userAccount);
-            }
 
         } catch (err) {
             return next(err);
@@ -86,11 +86,10 @@ class UserAccountController {
 
     async getUser(req, res, next) {
         try {
-            if (!req.principal) {
-                return next({message: 'Unauthorized', status: 401});
+            if (req.principal) {
+                const userAccount = await userAccountService.getUser(req.params.user);
+                return res.json(userAccount);
             }
-            const userAccount = await userAccountService.getUser(req.params.user);
-            return res.json(userAccount);
         } catch (err) {
             return next(err);
         }

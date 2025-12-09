@@ -19,6 +19,14 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
+    if(err.message && err.message.includes('Invalid credentials')) {
+        return res.status(403).json({
+            status: 'Forbidden',
+            code: 403,
+            message: err.message,
+        })
+
+    }
 
     return res.status(500).json({
         status: 'Internal server error',
