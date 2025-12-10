@@ -1,40 +1,41 @@
-const requireAuth = (req) => {
-    if (!req.principal) {
-        throw {status: 401, message: 'Unauthorized'};
+const requireAuth = (req, res, next) => {
+    if (!req.principal || !req.principal.username) {
+        return res.status(401).json({message: 'Unauthorized'})
     }
+    next();
 };
 
-
-const requireSelfOrAdmin = (req) => {
-    const principalLogin = req.principal?.username;
-    const targetLogin = req.params.user;
-
-    if (!principalLogin) {
-        throw {status: 401, message: 'Unauthorized'};
+const requireAdmin = (req, res, next) => {
+    if (!req.principal.roles.includes('ADMIN')) {
+        return res.status(403).json({message: 'Forbidden'})
+        // return next({ status: 403, message: 'Forbidden' });
     }
+    next();
+};
 
+const requireSelf = (req, res, next) => {
+    if (req.principal.username !== req.params.user) {
+        return res.status(403).json({message: 'Invalid credentials'})
+    }
+    next();
+};
+
+const requireSelfOrAdmin = (req, res, next) => {
+    const principal = req.principal.username;
+    const target = req.params.user;
     const isAdmin = req.principal.roles.includes('ADMIN');
-    const isSelf = principalLogin === targetLogin;
+    const isSelf = principal === target;
 
     if (!isAdmin && !isSelf) {
-        throw {status: 403, message: 'Invalid credentials'};
+        return res.status(403).json({message: 'Invalid credentials'})
     }
+
+    next();
 };
 
-
-const requireSelf = (req) => {
-    const principalLogin = req.principal.username;
-    if (!principalLogin) {
-        throw {status: 401, message: 'Unauthorized'};
-    }
-    const targetLogin = req.params.user;
-    if (principalLogin !== targetLogin) {
-        throw {status: 403, message: 'Invalid credentials'};
-    }
-};
+export { requireAuth, requireAdmin, requireSelf, requireSelfOrAdmin };
 
 
-export {requireAuth, requireSelfOrAdmin, requireSelf};
 
 
 
