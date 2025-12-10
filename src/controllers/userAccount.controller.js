@@ -1,5 +1,5 @@
 import userAccountService from "../services/user.account.service.js";
-import {requireAuth, requireSelf} from "../middlewares/authorization.middleware.js";
+
 
 class UserAccountController {
 

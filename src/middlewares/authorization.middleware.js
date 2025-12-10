@@ -1,3 +1,5 @@
+import postService from "../services/post.service.js";
+
 const requireAuth = (req, res, next) => {
     if (!req.principal || !req.principal.username) {
         return res.status(401).json({message: 'Unauthorized'})
@@ -33,7 +35,44 @@ const requireSelfOrAdmin = (req, res, next) => {
     next();
 };
 
-export { requireAuth, requireAdmin, requireSelf, requireSelfOrAdmin };
+const requirePostAuthor = async (req, res, next) => {
+    try {
+        const post = await postService.getPostById(req.params.id);
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+
+        if (req.principal.username !== post.author) {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+
+        req.post = post;
+        next();
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Post author or moderator
+const requirePostAuthorOrModerator = async (req, res, next) => {
+    try {
+        const post = await postService.getPostById(req.params.id);
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+
+        const isAuthor = req.principal.username === post.author;
+        const isModerator = req.principal.roles.includes('MODERATOR');
+
+        if (!isAuthor && !isModerator) {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+
+        req.post = post;
+        next();
+    } catch (err) {
+        next(err);
+    }
+};
+
+
+export { requireAuth, requireAdmin, requireSelf, requireSelfOrAdmin, requirePostAuthor, requirePostAuthorOrModerator };
 
 
 
