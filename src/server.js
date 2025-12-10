@@ -1,4 +1,4 @@
-import express from 'express'
+import express, {Router} from 'express'
 import mongoose from 'mongoose'
 import config from "./config/config.js"
 import postRoutes from "./routes/post.routes.js"
@@ -6,16 +6,31 @@ import userAccountRoutes from "./routes/user.routs.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import authentification from "./middlewares/authentication.middleware.js";
 import {createAdmin} from "./config/initAdmin.js";
+import authorization from "./middlewares/authorization.middleware.js";
+import {ADMIN} from "./config/constants.js";
+
 
 const app = express()
+const router = Router();
 
 app.use(express.json());
 app.use(authentification);
 
+router.all('/account/user/:user/role/:role', authorization.isOwnerOrHasRole('user', ADMIN))
+router.patch(['/account/user/:user', '/forum/post/:id/comment/:user'], authorization.isOwner('user'))
+router.delete('/account/user/:user', authorization.isOwnerOrHasRole('user', ADMIN))
+router.post('/forum/post/:author', authorization.isOwner('author'))
+// router.patch('/forum/post/:id/comment/:author', authorization.isOwner('author'))
+router.post('/forum/post/:id', authorization.isPostAuthor("id"))
+router.delete('/forum/post/:id', authorization.isPostAuthorOrHasRole("id"))
 
 
+app.use(router);
 app.use('/forum', postRoutes)
 app.use('/account', userAccountRoutes);
+// app.use(/^\/account\/user\/\w+\/role\/w+$/, authorization.hasRole('ADMIN'))
+
+
 
 app.use(errorHandler)
 

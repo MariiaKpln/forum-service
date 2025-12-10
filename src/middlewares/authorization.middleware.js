@@ -1,78 +1,38 @@
 import postService from "../services/post.service.js";
-
-const requireAuth = (req, res, next) => {
-    if (!req.principal || !req.principal.username) {
-        return res.status(401).json({message: 'Unauthorized'})
+import req from "express/lib/request.js";
+class Authorization {
+    hasRole(role) {
+        return (req, res, next) => req.principal.roles.includes(role.toUpperCase().trim()) ? next() : res.sendStatus(403).send('Access denied');
     }
-    next();
-};
-
-const requireAdmin = (req, res, next) => {
-    if (!req.principal.roles.includes('ADMIN')) {
-        return res.status(403).json({message: 'Forbidden'})
-        // return next({ status: 403, message: 'Forbidden' });
+    isOwner(paramName) {
+        return (req, res, next) => req.params[paramName] === req.principal.username ? next() : res.sendStatus(403).send('Access denied');
     }
-    next();
-};
-
-const requireSelf = (req, res, next) => {
-    if (req.principal.username !== req.params.user) {
-        return res.status(403).json({message: 'Invalid credentials'})
-    }
-    next();
-};
-
-const requireSelfOrAdmin = (req, res, next) => {
-    const principal = req.principal.username;
-    const target = req.params.user;
-    const isAdmin = req.principal.roles.includes('ADMIN');
-    const isSelf = principal === target;
-
-    if (!isAdmin && !isSelf) {
-        return res.status(403).json({message: 'Invalid credentials'})
-    }
-
-    next();
-};
-
-const requirePostAuthor = async (req, res, next) => {
-    try {
-        const post = await postService.getPostById(req.params.id);
-        if (!post) return res.status(404).json({ message: 'Post not found' });
-
-        if (req.principal.username !== post.author) {
-            return res.status(403).json({ message: 'Forbidden' });
+    isOwnerOrHasRole(paramName, role) {
+        return (req, res, next) => {
+            const isOwner = req.params[paramName] === req.principal.username;
+            const hasRole = req.principal.roles.includes(role.toUpperCase().trim());
+            return isOwner || hasRole ? next() : res.sendStatus(403).send('Access denied');
         }
-
-        req.post = post;
-        next();
-    } catch (err) {
-        next(err);
     }
-};
-
-// Post author or moderator
-const requirePostAuthorOrModerator = async (req, res, next) => {
-    try {
-        const post = await postService.getPostById(req.params.id);
-        if (!post) return res.status(404).json({ message: 'Post not found' });
-
-        const isAuthor = req.principal.username === post.author;
-        const isModerator = req.principal.roles.includes('MODERATOR');
-
-        if (!isAuthor && !isModerator) {
-            return res.status(403).json({ message: 'Forbidden' });
+    isPostAuthor(postIdParam) {
+        return async (req, res, next) => {
+            const postId = req.params[postIdParam];
+           const post = await postService.getPostById(postId);
+           return post.author === req.principal.username ? next() : res.sendStatus(403).send('Access denied');
         }
-
-        req.post = post;
-        next();
-    } catch (err) {
-        next(err);
     }
-};
+    isPostAuthorOrHasRole(postIdParam, role) {
+        return async (req, res, next) => {
+            const postId = req.params[postIdParam];
+            const post = await postService.getPostById(postId);
+            const isAuthor = post.author === req.principal.username;
+            const hasRole = req.principal.roles.includes(role.toUpperCase().trim());
+            return isAuthor || hasRole ? next() : res.sendStatus(403).send('Access denied');
+        }
+    }
+}
 
-
-export { requireAuth, requireAdmin, requireSelf, requireSelfOrAdmin, requirePostAuthor, requirePostAuthorOrModerator };
+export default new Authorization();
 
 
 
