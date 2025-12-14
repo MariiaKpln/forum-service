@@ -8,11 +8,20 @@ import authentification from "./middlewares/authentication.middleware.js";
 import {createAdmin} from "./config/initAdmin.js";
 import authorization from "./middlewares/authorization.middleware.js";
 import {ADMIN} from "./config/constants.js";
+import cors from "./config/cors.js";
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
 
 
 const app = express()
 const router = Router();
-
+app.use(express.static(path.join(__dirname, '../public')));
+app.use(cors);
 app.use(express.json());
 app.use(authentification);
 
@@ -20,7 +29,6 @@ router.all('/account/user/:user/role/:role', authorization.isOwnerOrHasRole('use
 router.patch(['/account/user/:user', '/forum/post/:id/comment/:user'], authorization.isOwner('user'))
 router.delete('/account/user/:user', authorization.isOwnerOrHasRole('user', ADMIN))
 router.post('/forum/post/:author', authorization.isOwner('author'))
-// router.patch('/forum/post/:id/comment/:author', authorization.isOwner('author'))
 router.post('/forum/post/:id', authorization.isPostAuthor("id"))
 router.delete('/forum/post/:id', authorization.isPostAuthorOrHasRole("id"))
 
